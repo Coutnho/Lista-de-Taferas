@@ -6,47 +6,92 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f5f5f5;
+      background: #f2f2f2;
       padding: 20px;
       text-align: center;
     }
+
     h1 {
       color: #333;
     }
+
     #taskInput {
-      padding: 8px;
-      width: 200px;
+      padding: 10px;
+      width: 60%;
+      max-width: 300px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
     }
-    #addBtn {
-      padding: 8px 12px;
-      margin-left: 5px;
+
+    #addBtn, #clearCompletedBtn {
+      padding: 10px 15px;
+      margin: 5px;
       cursor: pointer;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
     }
+
+    #clearCompletedBtn {
+      background-color: #f44336;
+    }
+
     ul {
       list-style: none;
       padding: 0;
-      max-width: 300px;
+      max-width: 400px;
       margin: 20px auto;
     }
+
     li {
       background: #fff;
       margin-bottom: 10px;
       padding: 10px;
       border: 1px solid #ddd;
+      border-radius: 4px;
       display: flex;
       justify-content: space-between;
+      align-items: center;
     }
+
+    .taskContent {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+    }
+
+    .completed {
+      text-decoration: line-through;
+      color: gray;
+    }
+
     .removeBtn {
       color: red;
       cursor: pointer;
+      font-size: 18px;
+      margin-left: 10px;
+    }
+
+    @media (max-width: 480px) {
+      #taskInput {
+        width: 90%;
+      }
+
+      ul {
+        width: 90%;
+      }
     }
   </style>
 </head>
 <body>
 
   <h1>Lista de Tarefas</h1>
+
   <input type="text" id="taskInput" placeholder="Digite uma tarefa">
   <button id="addBtn">Adicionar</button>
+  <button id="clearCompletedBtn">Limpar Concluídas</button>
 
   <ul id="taskList"></ul>
 
@@ -54,25 +99,77 @@
     const taskInput = document.getElementById('taskInput');
     const addBtn = document.getElementById('addBtn');
     const taskList = document.getElementById('taskList');
+    const clearCompletedBtn = document.getElementById('clearCompletedBtn');
 
+    // Carrega tarefas salvas
+    window.onload = () => {
+      const saved = localStorage.getItem('tasks');
+      if (saved) {
+        taskList.innerHTML = saved;
+        addEventsToItems();
+      }
+    };
+
+    // Salva no navegador
+    function saveTasks() {
+      localStorage.setItem('tasks', taskList.innerHTML);
+    }
+
+    // Adiciona nova tarefa
     addBtn.addEventListener('click', () => {
-      const taskText = taskInput.value.trim();
-      if (taskText === '') return;
+      const text = taskInput.value.trim();
+      if (text === '') return;
 
       const li = document.createElement('li');
-      li.textContent = taskText;
-
-      const removeBtn = document.createElement('span');
-      removeBtn.textContent = '✖';
-      removeBtn.classList.add('removeBtn');
-      removeBtn.onclick = () => li.remove();
-
-      li.appendChild(removeBtn);
+      li.innerHTML = `
+        <div class="taskContent">
+          <input type="checkbox" class="check">
+          <span class="taskText">${text}</span>
+        </div>
+        <span class="removeBtn">✖</span>
+      `;
       taskList.appendChild(li);
-
       taskInput.value = '';
+      addEventsToItem(li);
+      saveTasks();
+    });
+
+    // Aplica eventos a cada item
+    function addEventsToItem(li) {
+      const checkbox = li.querySelector('.check');
+      const spanText = li.querySelector('.taskText');
+      const removeBtn = li.querySelector('.removeBtn');
+
+      // Marcar/desmarcar como concluída
+      checkbox.addEventListener('change', () => {
+        spanText.classList.toggle('completed', checkbox.checked);
+        saveTasks();
+      });
+
+      // Remover tarefa
+      removeBtn.addEventListener('click', () => {
+        li.remove();
+        saveTasks();
+      });
+    }
+
+    // Aplica eventos a itens existentes (após carregar)
+    function addEventsToItems() {
+      document.querySelectorAll('#taskList li').forEach(addEventsToItem);
+    }
+
+    // Limpar concluídas
+    clearCompletedBtn.addEventListener('click', () => {
+      document.querySelectorAll('#taskList li').forEach(li => {
+        const checkbox = li.querySelector('.check');
+        if (checkbox && checkbox.checked) {
+          li.remove();
+        }
+      });
+      saveTasks();
     });
   </script>
 
 </body>
 </html>
+
